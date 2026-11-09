@@ -1,0 +1,36 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<style>
+  :root { --bg:#fbfaf8; --fg:#1d1c1a; --mut:#6b675f; --pri:#b4532a; --bd:#dedad2; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#181715; --fg:#efece6; --mut:#a29d93; --pri:#e0794a; --bd:#333; } }
+  body { margin:0; width:340px; font:13px -apple-system, system-ui, sans-serif; background:var(--bg); color:var(--fg); }
+  .wrap { padding:12px; display:grid; gap:8px; }
+  h1 { font-size:13px; margin:0; }
+  .t { font-weight:600; line-height:1.3; }
+  .m { color:var(--mut); font-size:12px; }
+  select, input, button { font:inherit; border:1px solid var(--bd); border-radius:6px; padding:6px 8px; background:transparent; color:var(--fg); }
+  button.primary { background:var(--pri); border-color:var(--pri); color:#fff; cursor:pointer; }
+  .row { display:flex; gap:6px; align-items:center; }
+  .chip { font-size:11px; border:1px solid var(--bd); border-radius:999px; padding:1px 7px; color:var(--mut); }
+  .err { color:#c8372d; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="row"><img src="icon128.png" width="18" height="18" alt="" /><h1>Save to Local Lib</h1></div>
+  <div id="item"><div class="m">Reading page…</div></div>
+  <div id="setup" hidden>
+    <div class="m">Paste the connector token from Local Lib → Settings → Browser connector.</div>
+    <div class="row"><input id="token" placeholder="token" style="flex:1" /><button id="saveToken">Save</button></div>
+  </div>
+  <div id="actions" hidden>
+    <select id="collection"><option value="">No collection</option></select>
+    <button class="primary" id="save">Save to library</button>
+  </div>
+  <div id="status" class="m"></div>
+</div>
+<script src="popup.js"></script>
+</body>
+</html>

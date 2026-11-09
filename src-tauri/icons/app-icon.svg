@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2a2622"/>
+      <stop offset="1" stop-color="#151311"/>
+    </linearGradient>
+    <linearGradient id="pageL" x1="1" y1="0" x2="0" y2="0">
+      <stop offset="0" stop-color="#e9e1d3"/>
+      <stop offset="1" stop-color="#fbf7ef"/>
+    </linearGradient>
+    <linearGradient id="pageR" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#e9e1d3"/>
+      <stop offset="1" stop-color="#fbf7ef"/>
+    </linearGradient>
+    <linearGradient id="ribbon" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e0794a"/>
+      <stop offset="1" stop-color="#b4532a"/>
+    </linearGradient>
+  </defs>
+  <!-- macOS-style squircle tile -->
+  <rect x="80" y="80" width="864" height="864" rx="196" fill="url(#bg)"/>
+  <!-- open book -->
+  <path d="M512 336 C 430 292, 316 276, 214 290 L 214 724 C 316 710, 430 726, 512 770 Z" fill="url(#pageL)"/>
+  <path d="M512 336 C 594 292, 708 276, 810 290 L 810 724 C 708 710, 594 726, 512 770 Z" fill="url(#pageR)"/>
+  <path d="M512 336 L 512 770" stroke="#cbbfa9" stroke-width="6"/>
+  <!-- text lines -->
+  <g stroke="#cdbfa8" stroke-width="14" stroke-linecap="round">
+    <path d="M276 390 C 340 382, 400 388, 456 404"/>
+    <path d="M276 450 C 340 442, 400 448, 456 464"/>
+    <path d="M276 510 C 340 502, 400 508, 456 524"/>
+    <path d="M276 570 C 330 563, 380 567, 420 578"/>
+    <path d="M568 404 C 624 388, 684 382, 748 390"/>
+    <path d="M568 464 C 624 448, 684 442, 748 450"/>
+  </g>
+  <!-- highlighted line -->
+  <path d="M568 524 C 624 508, 684 502, 748 510" stroke="#ffd400" stroke-opacity=".75" stroke-width="30" stroke-linecap="round"/>
+  <!-- bookmark ribbon -->
+  <path d="M640 250 L 720 250 L 720 470 L 680 436 L 640 470 Z" fill="url(#ribbon)"/>
+</svg>

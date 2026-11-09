@@ -1,0 +1,178 @@
+name: Release
+
+# Publish a release by pushing to master with a commit message that ends in "--release",
+# or run this workflow by hand. The version comes from the first entry of changelogs/changelogs.json.
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    if: github.event_name == 'workflow_dispatch' || endsWith(github.event.head_commit.message, '--release')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      sha: ${{ steps.bump.outputs.sha }}
+      release_id: ${{ steps.release.outputs.id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify version
+        id: version
+        run: |
+          set -o pipefail
+          ./scripts/verify_release.sh | tee verify.log
+          echo "version=$(tail -n 1 verify.log)" >> "$GITHUB_OUTPUT"
+
+      - name: Fail if this version was already released
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/v${{ steps.version.outputs.version }}" >/dev/null; then
+            echo "v${{ steps.version.outputs.version }} already exists. Add a new entry at the top of changelogs/changelogs.json."
+            exit 1
+          fi
+
+      - name: Bump version in manifests
+        id: bump
+        run: |
+          V=${{ steps.version.outputs.version }}
+          jq ".version = \"$V\"" package.json > p.tmp && mv p.tmp package.json
+          jq ".version = \"$V\"" src-tauri/tauri.conf.json > t.tmp && mv t.tmp src-tauri/tauri.conf.json
+          sed -i "0,/^version = \".*\"/s//version = \"$V\"/" src-tauri/Cargo.toml
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: release v$V [skip ci]"
+            git push
+          fi
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Release notes
+        run: |
+          V=${{ steps.version.outputs.version }}
+          {
+            if [ "$(jq '.[0].features | length' changelogs/changelogs.json)" -gt 0 ]; then
+              echo "### Features"; jq -r '.[0].features[]' changelogs/changelogs.json | sed 's/^/- /'; echo
+            fi
+            if [ "$(jq '.[0].fixes | length' changelogs/changelogs.json)" -gt 0 ]; then
+              echo "### Fixes"; jq -r '.[0].fixes[]' changelogs/changelogs.json | sed 's/^/- /'; echo
+            fi
+            echo "---"
+            echo "### Downloads"
+            echo
+            echo "| Platform | File |"
+            echo "| :--- | :--- |"
+            echo "| macOS, Apple Silicon (M1–M4) | \`Local.Lib_${V}_aarch64.dmg\` |"
+            echo "| macOS, Intel | \`Local.Lib_${V}_x64.dmg\` |"
+            echo "| Windows x64 | \`Local.Lib_${V}_x64-setup.exe\` |"
+            echo "| Linux x64 | \`Local.Lib_${V}_amd64.deb\` / \`.AppImage\` |"
+            echo
+            echo "Installed copies update themselves (Settings → Library → About & updates)."
+            echo
+            echo "### macOS: first launch"
+            echo "This build isn't notarized by Apple yet. If macOS says the app is damaged or can't be opened, move it to Applications and run once:"
+            echo
+            echo '```'
+            echo 'xattr -cr "/Applications/Local Lib.app"'
+            echo '```'
+            echo
+            echo "### Windows"
+            echo "SmartScreen may warn about an unrecognized app: choose **More info → Run anyway**."
+            echo
+            echo "### Linux"
+            echo "Audiobook export needs \`ffmpeg\` (on Windows too: \`winget install ffmpeg\`)."
+          } > notes.md
+
+      - name: Create draft release
+        id: release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          V=${{ steps.version.outputs.version }}
+          gh release create "v$V" --draft --title "Local Lib v$V" --notes-file notes.md --target "${{ steps.bump.outputs.sha }}"
+          echo "id=$(gh api repos/${{ github.repository }}/releases --jq ".[] | select(.tag_name == \"v$V\") | .id" | head -n1)" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: prepare
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest
+            target: aarch64-apple-darwin
+          - platform: macos-latest
+            target: x86_64-apple-darwin
+          - platform: windows-latest
+            target: x86_64-pc-windows-msvc
+          - platform: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.sha }}
+
+      - name: Linux dependencies
+        if: startsWith(matrix.platform, 'ubuntu')
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf \
+            libasound2-dev libdbus-1-dev libssl-dev build-essential curl wget file libxdo-dev
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+          key: ${{ matrix.target }}
+
+      - name: Install frontend dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build and upload
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          # Optional Apple signing + notarization: add these secrets later and builds are signed automatically.
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        with:
+          releaseId: ${{ needs.prepare.outputs.release_id }}
+          tauriScript: bun tauri
+          args: --target ${{ matrix.target }}
+          includeUpdaterJson: true
+          updaterJsonPreferNsis: true
+
+  publish:
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh api -X PATCH repos/${{ github.repository }}/releases/${{ needs.prepare.outputs.release_id }} -F draft=false -F make_latest=true

@@ -1,0 +1,20 @@
+[
+  {
+    "version": "0.1.0",
+    "date": "2026-11-08",
+    "features": [
+      "First public release of Local Lib: a local-first library and reader for PDF, EPUB, MOBI/AZW3, DjVu, DOCX/ODT, CBZ and more",
+      "Highlights, notes, bookmarks, ink and area selections, with a notebook, Markdown/PDF export and Readwise/KOReader integrations",
+      "Full-text search across the whole library, plus optional semantic search with embeddings",
+      "AI assistant over a book or the whole library (Anthropic, Gemini, OpenAI-compatible or local models), chapter summaries and whole-book overviews",
+      "Identify with AI: finds a document's DOI or ISBN from its first pages and fetches the full record",
+      "Read aloud with offline neural voices (Kokoro, Piper), voice questions while listening, and audiobook export to M4B with chapters",
+      "Flashcards with FSRS scheduling, image-occlusion cards from diagrams, reading goals, stats and study plans",
+      "Discover and download from OPDS catalogs, Open Library, Project Gutenberg and GitHub sources, with saved syncs",
+      "Citations in 10,000+ CSL styles, a cite-while-you-write palette and a browser connector compatible with Zotero",
+      "Encrypted sync and backups through a cloud folder, WebDAV, Dropbox, Google Drive or OneDrive",
+      "Scanned-book OCR (macOS Vision or Tesseract) and in-app updates"
+    ],
+    "fixes": []
+  }
+]

@@ -1,0 +1,69 @@
+[package]
+name = "local-lib"
+version = "0.1.0"
+description = "Local-first book library and professional reader"
+authors = ["local-lib"]
+edition = "2021"
+license = "GPL-3.0-or-later"
+rust-version = "1.77.2"
+
+[lib]
+name = "local_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["protocol-asset"] }
+tauri-plugin-dialog = "2"
+tauri-plugin-opener = "2"
+tauri-plugin-notification = "2"
+tauri-plugin-global-shortcut = "2"
+tiny_http = "0.12"
+sherpa-onnx = "=1.13.8"
+tar = "0.4"
+argon2 = "0.5"
+chacha20poly1305 = "0.10"
+rand = "0.8"
+md-5 = "0.10"
+sha2 = "0.10"
+bzip2 = "0.4"
+zip = { version = "2", default-features = false, features = ["deflate"] }
+
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "1"
+chrono = { version = "0.4", features = ["serde"] }
+dirs = "5"
+tokio = { version = "1", features = ["rt", "rt-multi-thread", "macros", "sync", "time", "fs"] }
+futures-util = "0.3"
+urlencoding = "2"
+regex = "1"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "stream", "cookies"] }
+bytes = "1"
+rusqlite = { version = "0.32", features = ["bundled", "serde_json"] }
+blake3 = "1"
+walkdir = "2"
+notify = "6"
+quick-xml = "0.36"
+async-trait = "0.1"
+once_cell = "1"
+uuid = { version = "1", features = ["v4"] }
+base64 = "0.22"
+keyring = { version = "3", features = ["apple-native", "windows-native", "sync-secret-service"] }
+mp4ameta = "0.13.0"
+cpal = "0.17.1"
+
+[dev-dependencies]
+tempfile = "3"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.6"
+objc2-foundation = { version = "0.3", features = ["NSArray", "NSString", "NSData", "NSDictionary", "NSError", "NSValue", "NSRange"] }
+objc2-vision = { version = "0.3", features = ["VNRequest", "VNRecognizeTextRequest", "VNRequestHandler", "VNObservation", "VNTypes", "VNUtils", "block2", "objc2-core-foundation"] }
+objc2-core-foundation = { version = "0.3", features = ["CFCGTypes"] }
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-process = "2.3.1"
+tauri-plugin-updater = "2.12.0"
